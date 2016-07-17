@@ -1,0 +1,5 @@
+{
+    "command": "python3.5",
+    "showOutput": "always",
+    "args": ["${file}","-hs couchbase://localhost/default","-kp A","-ks 0","-ke 100","-vs 1024","-sl 10"]
+    }
