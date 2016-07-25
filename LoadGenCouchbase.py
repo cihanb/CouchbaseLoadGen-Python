@@ -4,7 +4,6 @@ from couchbase.bucket import Bucket
 import sys
 import time
 
-
 def printhelp():
     if (sys.platform=="win32"):
         print("""
@@ -91,7 +90,7 @@ elif (len(sys.argv) > 0):
 print ("Connecting: ",connection_string)
 b = Bucket(connection_string)
 
-print ("inserting total items: "+str(total_items))
+print ("inserting total items: " + str(total_items))
 for i in range(total_items):
     t0 = time.time()
     b.upsert(key_prefix + str(key_start + i),{'a1': (key_start + i) % a1_selectivity, 'a2': "Zero".zfill(value_size)},
