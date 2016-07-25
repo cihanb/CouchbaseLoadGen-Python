@@ -6,21 +6,38 @@ import time
 
 
 def printhelp():
-    print("""
-    python load generator. command line arguments
-    connection
-        -hs:host address couchbase://ADDR/BUCKET
-    key generation
-        -kp:document key prefix (string)
-        -ks:starting key postfix value (int)
-        -ke:ending key postfix value (int)
-    value generation
-        -vs:value size in bytes (int)
-        -sl:selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
-            for unique values, set this to the value of ke-kb
-            for 2 identical a1 values, set this to the value of (ke-kb)/2 
-    """)
-    return
+    if (sys.platform=="win32"):
+        print("""
+        python load generator. command line arguments
+        connection
+            -hs:host address couchbase://ADDR/BUCKET
+        key generation
+            -kp:document key prefix (string)
+            -ks:starting key postfix value (int)
+            -ke:ending key postfix value (int)
+        value generation
+            -vs:value size in bytes (int)
+            -sl:selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
+                for unique values, set this to the value of ke-kb
+                for 2 identical a1 values, set this to the value of (ke-kb)/2 
+        """)
+        return
+    else:
+        print("""
+        python load generator. command line arguments
+        connection
+            -hs host address couchbase://ADDR/BUCKET
+        key generation
+            -kp document key prefix (string)
+            -ks starting key postfix value (int)
+            -ke ending key postfix value (int)
+        value generation
+            -vs value size in bytes (int)
+            -sl selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
+                for unique values, set this to the value of ke-kb
+                for 2 identical a1 values, set this to the value of (ke-kb)/2 
+        """)
+        return
 
 
 total_items=0
@@ -32,7 +49,11 @@ if (len(sys.argv) == 0):
     raise("No arguments specified.")
 elif (len(sys.argv) > 0):
     for arg in sys.argv:
-        argsplit = arg.split(" ")
+        if (sys.platform=="win32"):
+            argsplit = arg.split("=")
+        else:
+            argsplit = arg.split(" ")
+
         if (argsplit[0] == "-hs"):
             #connection string
             connection_string = str(argsplit[1])
