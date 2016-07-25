@@ -9,14 +9,14 @@ def printhelp():
         print("""
         python load generator. command line arguments
         connection
-            -hs:host address couchbase://ADDR/BUCKET
+            -hs=host address couchbase://ADDR/BUCKET
         key generation
-            -kp:document key prefix (string)
-            -ks:starting key postfix value (int)
-            -ke:ending key postfix value (int)
+            -kp=document key prefix (string)
+            -ks=starting key postfix value (int)
+            -ke=ending key postfix value (int)
         value generation
-            -vs:value size in bytes (int)
-            -sl:selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
+            -vs=value size in bytes (int)
+            -sl=selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
                 for unique values, set this to the value of ke-kb
                 for 2 identical a1 values, set this to the value of (ke-kb)/2 
         """)
