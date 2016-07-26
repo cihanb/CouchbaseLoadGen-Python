@@ -26,6 +26,9 @@
   <ItemGroup>
     <Compile Include="LoadGenCouchbase.py" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="run.bat" />
+  </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
 </Project>

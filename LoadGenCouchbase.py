@@ -2,39 +2,49 @@
 
 from couchbase.bucket import Bucket
 import sys
+from datetime import datetime
+import timeit
 import time
 
 def printhelp():
     if (sys.platform=="win32"):
         print("""
-        python load generator. command line arguments
-        connection
+        Python load generator. command line arguments
+        Connection parameter
             -hs=host address couchbase://ADDR/BUCKET
-        key generation
+        Key generation parameters
             -kp=document key prefix (string)
             -ks=starting key postfix value (int)
             -ke=ending key postfix value (int)
-        value generation
+        Value generation parameters
             -vs=value size in bytes (int)
             -sl=selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
                 for unique values, set this to the value of ke-kb
                 for 2 identical a1 values, set this to the value of (ke-kb)/2 
+       Samples:
+        The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
+        in value with an attribute "a1" that is values (100-0) % 10
+            LoadGenCouchbase.py -hs=couchbase://localhost/default -kp=A -ks=0 -ke=100 -vs=1024 -sl=10
         """)
         return
     else:
         print("""
-        python load generator. command line arguments
-        connection
+        Python load generator. command line arguments
+        Connection parameter
             -hs host address couchbase://ADDR/BUCKET
-        key generation
+        Key generation parameters
             -kp document key prefix (string)
             -ks starting key postfix value (int)
             -ke ending key postfix value (int)
-        value generation
+        Value generation parameters
             -vs value size in bytes (int)
             -sl selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
                 for unique values, set this to the value of ke-kb
                 for 2 identical a1 values, set this to the value of (ke-kb)/2 
+        Samples:
+        The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
+        in value with an attribute "a1" that is values (100-0) % 10
+            LoadGenCouchbase.py -hs couchbase://localhost/default -kp A -ks 0 -ke 100 -vs 1024 -sl 10
         """)
         return
 
@@ -90,12 +100,13 @@ elif (len(sys.argv) > 0):
 print ("Connecting: ",connection_string)
 b = Bucket(connection_string)
 
-print ("inserting total items: " + str(total_items))
+print ("STARTING: inserting total items: " + str(total_items))
 for i in range(total_items):
-    t0 = time.time()
+    t0 = time.clock()
     b.upsert(key_prefix + str(key_start + i),{'a1': (key_start + i) % a1_selectivity, 'a2': "Zero".zfill(value_size)},
         replicate_to=0,
         persist_to=0)
-    print ("total time in milliseconds: %2.3f" % ((time.time() - t0)*1000))
+    t1 = time.clock()
+    print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
 
-print ("done!")
+print ("DONE: inserted total items: " + str(total_items))
