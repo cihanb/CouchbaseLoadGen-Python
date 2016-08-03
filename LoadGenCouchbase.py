@@ -14,15 +14,20 @@ def printhelp():
             -hs=host address couchbase://ADDR/BUCKET
         Operation parameter
             -op=operation (query, load)
-        Key generation parameters
+        *load/query: Key generation parameters
             -kp=document key prefix (string)
             -ks=starting key postfix value (int)
             -ke=ending key postfix value (int)
-        Value generation parameters
+        *load: Value generation parameters
             -vs=value size in bytes (int)
             -sl=selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
                 for unique values, set this to the value of ke-kb
                 for 2 identical a1 values, set this to the value of (ke-kb)/2 
+        *query: Query parameters
+            -qs=query string. N1QL statement used for query. $1 is replaced with the key generation parameter value_size
+            -qi=number of iterations for query execution. specify 0 for looping and any integer for specify the times
+                to execute the query.
+
        Samples:
         The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
         in value with an attribute "a1" that is values (100-0) % 10
@@ -36,17 +41,19 @@ def printhelp():
             -hs host address couchbase://ADDR/BUCKET
         Operation parameter
             -op operation (query, load)
-        *dataload: Key generation parameters
+        *load/query: Key generation parameters
             -kp document key prefix (string)
             -ks starting key postfix value (int)
             -ke ending key postfix value (int)
-        *dataload: Value generation parameters
+        *load: Value generation parameters
             -vs value size in bytes (int)
             -sl selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
                 for unique values, set this to the value of ke-kb
                 for 2 identical a1 values, set this to the value of (ke-kb)/2 
         *query: Query parameters
-            -qu 
+            -qs query string. N1QL statement used for query. $1 is replaced with the key generation parameter value_size
+            -qi number of iterations for query execution. specify 0 for looping and any integer for specify the times
+                to execute the query.
                 
         Samples:
         The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
@@ -65,7 +72,7 @@ if (len(sys.argv) == 0):
     raise("No arguments specified.")
 elif (len(sys.argv) > 0):
     for arg in sys.argv:
-        #splitter based on format
+        #splitter based on platform
         if (sys.platform=="win32"):
             argsplit = arg.split("=")
         else:
@@ -130,8 +137,8 @@ if (operation == "load"):
             persist_to=0)
         t1 = time.clock()
         print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
-
     print ("DONE: inserted total items: " + str(total_items))
+
 elif (operation == "query"):
     print ("STARTING: querying : " + str(query_string))
     for i in range(query_iterations):
@@ -139,6 +146,5 @@ elif (operation == "query"):
         b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
         t1 = time.clock()
         print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
-
     print ("DONE: queried total iterations: " + str(query_iterations))
     
