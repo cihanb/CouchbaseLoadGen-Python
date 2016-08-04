@@ -4,38 +4,52 @@ import sys
 import time
 from couchbase.bucket import Bucket
 
-
 def printhelp():
     print("""
-        Python load generator. command line arguments
-        Connection parameter
-            -hs=host address couchbase://ADDR/BUCKET
-        Operation parameter
-            -op=operation (query, load)
-        *load/query: Key generation parameters
-            -kp=document key prefix (string)
-            -ks=starting key postfix value (int)
-            -ke=ending key postfix value (int)
-        *load: Value generation parameters
-            -vs=value size in bytes (int)
-            -sl=selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
-                for unique values, set this to the value of ke-kb
-                for 2 identical a1 values, set this to the value of (ke-kb)/2 
-        *query: Query parameters
-            -qs=query string. N1QL statement used for query. $1 is replaced with the key generation parameter value_size
-            -qi=number of iterations for query execution. specify 0 for looping and any integer for specify the times
-                to execute the query.
+Python load generator for Couchbase Server 4.0 or later. Command line arguments:
 
-       Samples:
-        The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
-        in value with an attribute "a1" that is values (100-0) % 10
-            LoadGenCouchbase.py -hs=couchbase://localhost/default -op=load -kp=A -ks=0 -ke=100 -vs=1024 -sl=10
-        """)
+Connection parameter
+    -hs=host address couchbase://ADDR/BUCKET (ex: -hs=couchbase://localhost/default)
+
+Operation parameter
+    -op=operation to perform. Can be set to query, load
+
+Key generation parameters. Applies to load and query operations. All keys get the key prefix (-kp), if 
+one is specified. Keys are generated from starting key number (ks) to ending key number (ke). 
+    -kp=document key prefix (string)
+    -ks=starting key postfix value (int)
+    -ke=ending key postfix value (int)
+
+Value generation parameters. Applies to load operation
+    -vs=value size in bytes (int)
+    -sl=selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
+        for unique values, set this to the value of ke-kb
+        for 2 distinct a1 values, set this to the value of (ke-kb)/2
+        and so on.
+
+Query parameters. Applies to query operation.
+    -qs=query string. N1QL statement used for query. You can specify one generated value for the query: $1.
+        $1 is replaced with the key generation parameters (kp,ks and ke) explained above
+    -qi=number of iterations for query execution. specify 0 for looping and any integer for specify the times
+        to execute the query.
+
+Samples:
+Loading data: The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
+in value with an attribute "a1" that is values (100-0) % 10
+    LoadGenCouchbase.py -hs=couchbase://localhost/default -op=load -kp=A -ks=0 -ke=100 -vs=1024 -sl=10
+
+Querying data: The following run the query specified 1000 times with the $1 replaced with values from A0 to 
+A100 for a1.
+    LoadGenCouchbase.py -hs=couchbase://localhost/default -op=query -qs=select * from default where a1='$1' 
+    -kp=A -ks=0 -ke=100 -qi=1000
+""")
     return
 
 
 total_items=0
 key_prefix=""
+key_start=0
+key_end=0
 operation=""
 
 #process commandline arguments
@@ -88,7 +102,7 @@ elif (len(sys.argv) > 0):
             #selectivity
             a1_selectivity = int(argsplit[1])
             continue
-        elif ((sys.argv[0] == "-h") or (sys.argv[0] == "-help")):
+        elif ((argsplit[0] == "-h") or (argsplit[0] == "--help")):
             printhelp()
             sys.exit(0)
         # else:
