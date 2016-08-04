@@ -7,14 +7,15 @@
     "pythonPath":"/usr/local/bin/python3.5", 
     "request": "launch",
     "stopOnEntry": true,
-    "externalConsole":false,
+    "externalConsole": false,
     "program": "${file}",
     "debugOptions": [
         "WaitOnAbnormalExit",
         "WaitOnNormalExit",
         "RedirectOutput"
     ],
-    "args": ["${file}","-hs couchbase://localhost/default","-kp A","-ks 0","-ke 100","-vs 1024","-sl 10"]
+    //"args": ["${file}","-hs couchbase://localhost/default","-op load","-kp A","-ks 0","-ke 100","-vs 1024","-sl 10"]
+    "args": ["${file}","-hn=couchbase://localhost/default","-qs=select * from default where a1=$1","-op=query","-ks=0","-ke=100","-qi=1024"]
     }   ,
         {
             "name": "Python Console App",

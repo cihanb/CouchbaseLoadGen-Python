@@ -1,14 +1,12 @@
-#!/usr/bin/python
+#!/usr/bin/python3.5
 
-from couchbase.bucket import Bucket
 import sys
-from datetime import datetime
-import timeit
 import time
+from couchbase.bucket import Bucket
+
 
 def printhelp():
-    if (sys.platform=="win32"):
-        print("""
+    print("""
         Python load generator. command line arguments
         Connection parameter
             -hs=host address couchbase://ADDR/BUCKET
@@ -33,37 +31,12 @@ def printhelp():
         in value with an attribute "a1" that is values (100-0) % 10
             LoadGenCouchbase.py -hs=couchbase://localhost/default -op=load -kp=A -ks=0 -ke=100 -vs=1024 -sl=10
         """)
-        return
-    else:
-        print("""
-        Python load generator. command line arguments
-        Connection parameter
-            -hs host address couchbase://ADDR/BUCKET
-        Operation parameter
-            -op operation (query, load)
-        *load/query: Key generation parameters
-            -kp document key prefix (string)
-            -ks starting key postfix value (int)
-            -ke ending key postfix value (int)
-        *load: Value generation parameters
-            -vs value size in bytes (int)
-            -sl selectivity of a1 attribute in valuet (int) - distinct values for a1 within total items (ke-kb).
-                for unique values, set this to the value of ke-kb
-                for 2 identical a1 values, set this to the value of (ke-kb)/2 
-        *query: Query parameters
-            -qs query string. N1QL statement used for query. $1 is replaced with the key generation parameter value_size
-            -qi number of iterations for query execution. specify 0 for looping and any integer for specify the times
-                to execute the query.
-                
-        Samples:
-        The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
-        in value with an attribute "a1" that is values (100-0) % 10
-            LoadGenCouchbase.py -hs couchbase://localhost/default -op load -kp A -ks 0 -ke 100 -vs 1024 -sl 10
-        """)
-        return
+    return
 
 
 total_items=0
+key_prefix=""
+operation=""
 
 #process commandline arguments
 if (len(sys.argv) == 0):
@@ -73,10 +46,7 @@ if (len(sys.argv) == 0):
 elif (len(sys.argv) > 0):
     for arg in sys.argv:
         #splitter based on platform
-        if (sys.platform=="win32"):
-            argsplit = arg.split("=")
-        else:
-            argsplit = arg.split(" ")
+        argsplit = arg.split("=")
 
         #read commandline args
         if (argsplit[0] == "-op"):
@@ -85,13 +55,16 @@ elif (len(sys.argv) > 0):
             continue
         elif (argsplit[0] == "-qs"):
             #query string
-            query_string = str(argsplit[1])
+            if (len(argsplit)>2):
+                query_string = str("=".join(argsplit[1:]))
+            else:
+                query_string = str(argsplit[1])
             continue
         elif (argsplit[0] == "-qi"):
             #query string
-            query_iterations = str(argsplit[1])
+            query_iterations = int(argsplit[1])
             continue
-        elif (argsplit[0] == "-hs"):
+        elif (argsplit[0] == "-hn"):
             #connection string
             connection_string = str(argsplit[1])
             continue
@@ -117,7 +90,7 @@ elif (len(sys.argv) > 0):
             continue
         elif ((sys.argv[0] == "-h") or (sys.argv[0] == "-help")):
             printhelp()
-            raise()
+            sys.exit(0)
         # else:
         #     print("Invalid argument: {}", arg)
         #     printhelp()
@@ -142,9 +115,17 @@ if (operation == "load"):
 elif (operation == "query"):
     print ("STARTING: querying : " + str(query_string))
     for i in range(query_iterations):
+        query_valued = query_string.replace("$1",key_prefix + str((key_start + i) % key_end))
         t0 = time.clock()
-        b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
+        for row in b.n1ql_query(query_valued):
+            # print (row)
+            pass
+        # b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
         t1 = time.clock()
         print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
     print ("DONE: queried total iterations: " + str(query_iterations))
-    
+
+elif (operation == ""):
+    print ("No operation argument (-op) specified.")
+    printhelp()
+    sys.exit()
