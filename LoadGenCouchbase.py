@@ -2,7 +2,27 @@
 
 import sys
 import time
+import threading
 from couchbase.bucket import Bucket
+
+# class cb_loader(threading.Thread):
+def cb_loader(_tid, _total_threads, _key_prefix, _key_start, _key_end, _a1_selectivity, _value_size, _connection_string):
+    print ("Starting Thread %s" %  _tid)
+
+    #establish connection
+    print ("Connecting: ",connection_string)
+    b = Bucket(_connection_string)
+
+    for i in range( _key_start, _key_end):
+        if (i % _total_threads == _tid):
+            t0 = time.clock()
+            b.upsert( _key_prefix + str(i),
+                {'a1': (i) % _a1_selectivity, 'a2': "Zero".zfill(_value_size)},
+                replicate_to=0,
+                persist_to=0)
+            t1 = time.clock()
+            print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
+
 
 def printhelp():
     print("""
@@ -45,12 +65,11 @@ A100 for a1.
 """)
     return
 
-
-total_items=0
 key_prefix=""
 key_start=0
 key_end=0
 operation=""
+total_threads=1
 
 #process commandline arguments
 if (len(sys.argv) == 0):
@@ -102,29 +121,45 @@ elif (len(sys.argv) > 0):
             #selectivity
             a1_selectivity = int(argsplit[1])
             continue
+        elif (argsplit[0] == "-tc"):
+            #selectivity
+            total_threads = int(argsplit[1])
+            continue
         elif ((argsplit[0] == "-h") or (argsplit[0] == "--help")):
             printhelp()
             sys.exit(0)
         # else:
         #     print("Invalid argument: {}", arg)
         #     printhelp()
-            
-    total_items=key_end-key_start
-
-#establish connection
-print ("Connecting: ",connection_string)
-b = Bucket(connection_string)
 
 if (operation == "load"):
-    print ("STARTING: inserting total items: " + str(total_items))
-    for i in range(total_items):
-        t0 = time.clock()
-        b.upsert(key_prefix + str(key_start + i),{'a1': (key_start + i) % a1_selectivity, 'a2': "Zero".zfill(value_size)},
-            replicate_to=0,
-            persist_to=0)
-        t1 = time.clock()
-        print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
-    print ("DONE: inserted total items: " + str(total_items))
+    print ("STARTING: inserting total items: " + str(key_end-key_start))
+    if (total_threads > 1):
+        cb_loader_threads = []
+        for i in range(total_threads):
+            cb_loader_threads.append(
+                threading.Thread(target = cb_loader, 
+                    args = (i, total_threads, key_prefix, key_start, key_end, a1_selectivity, value_size, connection_string, )
+                    )
+                )
+        for j in cb_loader_threads:
+            j.start()
+
+        for k in cb_loader_threads:
+            k.join()
+    else:
+        #establish connection
+        print ("Connecting: ",connection_string)
+        b = Bucket(connection_string)
+
+        for i in range(key_start,key_end):
+            t0 = time.clock()
+            b.upsert(key_prefix + str(i),{'a1': i % a1_selectivity, 'a2': "Zero".zfill(value_size)},
+                replicate_to=0,
+                persist_to=0)
+            t1 = time.clock()
+            print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
+    print ("DONE: inserted total items: " + str(key_end-key_start))
 
 elif (operation == "query"):
     print ("STARTING: querying : " + str(query_string))
@@ -143,3 +178,4 @@ elif (operation == ""):
     print ("No operation argument (-op) specified.")
     printhelp()
     sys.exit()
+
