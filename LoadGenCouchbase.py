@@ -21,7 +21,7 @@ def cb_loader(_tid, _total_threads, _key_prefix, _key_start, _key_end, _a1_selec
                 replicate_to=0,
                 persist_to=0)
             t1 = time.clock()
-            print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
+            print ("Thread: " + str(_tid) + ". Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
 
 # func for multi threaded execution of query
 def cb_query(_tid, _total_threads, _key_prefix, _key_start, _key_end, _query_string, _query_iterations, _connection_string):
