@@ -51,8 +51,11 @@ Python load generator for Couchbase Server 4.0 or later. Command line arguments:
 Connection parameter
     -hs=host address couchbase://ADDR/BUCKET (ex: -hs=couchbase://localhost/default)
 
-Operation parameter
+Operation parameters
     -op=operation to perform. Can be set to query, load
+    -tc=thread count. By default the execution is single threaded but you can parallelize for better 
+        performance. Each thread gets an equal share of the load or query execution over an independent 
+        connection.
 
 Key generation parameters. Applies to load and query operations. All keys get the key prefix (-kp), if 
 one is specified. Keys are generated from starting key number (ks) to ending key number (ke). 
@@ -81,7 +84,7 @@ in value with an attribute "a1" that is values (100-0) % 10
 Querying data: The following run the query specified 1000 times with the $1 replaced with values from A0 to 
 A100 for a1.
     LoadGenCouchbase.py -hs=couchbase://localhost/default -op=query -qs=select * from default where a1='$1' 
-    -kp=A -ks=0 -ke=100 -qi=1000
+    -kp=A -ks=0 -ke=100 -qi=10000 -tc=5
 """)
     return
 
