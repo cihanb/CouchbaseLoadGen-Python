@@ -1,6 +1,6 @@
 {
     "command": "python3.5",
     "showOutput": "always",
-    // "args": ["${file}","-hn=couchbase://localhost/default","-qs=select * from default where a1=$1","-op=query","-ks=0","-ke=100","-qi=1024"]
-    "args": ["${file}","-hn=couchbase://localhost/default","-tc=3","-op=load","-kp=A","-ks=0","-ke=100","-vs=1024","-sl=10"]
+    "args": ["${file}","-hn=couchbase://localhost/default","-tc=4","-qs=select * from default where a1=$1","-op=query","-ks=0","-ke=100","-qi=1024"]
+    // "args": ["${file}","-hn=couchbase://localhost/default","-tc=3","-op=load","-kp=A","-ks=0","-ke=100","-vs=1024","-sl=10"]
     }

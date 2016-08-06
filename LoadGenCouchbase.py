@@ -5,7 +5,7 @@ import time
 import threading
 from couchbase.bucket import Bucket
 
-# class cb_loader(threading.Thread):
+# func for multi threaded execution of load
 def cb_loader(_tid, _total_threads, _key_prefix, _key_start, _key_end, _a1_selectivity, _value_size, _connection_string):
     print ("Starting Thread %s" %  _tid)
 
@@ -22,6 +22,26 @@ def cb_loader(_tid, _total_threads, _key_prefix, _key_start, _key_end, _a1_selec
                 persist_to=0)
             t1 = time.clock()
             print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
+
+# func for multi threaded execution of query
+def cb_query(_tid, _total_threads, _key_prefix, _key_start, _key_end, _query_string, _query_iterations, _connection_string):
+    print ("Starting Thread %s" %  _tid)
+
+    #establish connection
+    print ("Connecting: ",connection_string)
+    b = Bucket(_connection_string)
+
+    for i in range(query_iterations):
+        if (i % _total_threads == _tid):
+            _query_valued = _query_string.replace("$1", _key_prefix + str(((_key_start + i) % _key_end) + key_start))
+            t0 = time.clock()
+            for row in b.n1ql_query(_query_valued):
+                # just measure retrieval time
+                pass
+            # b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
+            t1 = time.clock()
+            print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
+
 
 
 def printhelp():
@@ -135,6 +155,7 @@ elif (len(sys.argv) > 0):
 if (operation == "load"):
     print ("STARTING: inserting total items: " + str(key_end-key_start))
     if (total_threads > 1):
+        #multi-threaded execution
         cb_loader_threads = []
         for i in range(total_threads):
             cb_loader_threads.append(
@@ -148,6 +169,7 @@ if (operation == "load"):
         for k in cb_loader_threads:
             k.join()
     else:
+        #single-threaded execution
         #establish connection
         print ("Connecting: ",connection_string)
         b = Bucket(connection_string)
@@ -163,15 +185,30 @@ if (operation == "load"):
 
 elif (operation == "query"):
     print ("STARTING: querying : " + str(query_string))
-    for i in range(query_iterations):
-        query_valued = query_string.replace("$1",key_prefix + str((key_start + i) % key_end))
-        t0 = time.clock()
-        for row in b.n1ql_query(query_valued):
-            # print (row)
-            pass
-        # b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
-        t1 = time.clock()
-        print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
+    if (total_threads > 1):
+        #multi-threaded execution
+        cb_query_threads = []
+        for i in range(total_threads):
+            cb_query_threads.append(
+                threading.Thread(target = cb_query, 
+                    args = (i, total_threads, key_prefix, key_start, key_end, query_string, query_iterations, connection_string, )
+                    )
+                )
+        for j in cb_query_threads:
+            j.start()
+
+        for k in cb_query_threads:
+            k.join()
+    else:
+        for i in range(query_iterations):
+            query_valued = query_string.replace("$1",key_prefix + str(((key_start + i) % key_end) + key_start))
+            t0 = time.clock()
+            for row in b.n1ql_query(query_valued):
+                # just measure retrieval time
+                pass
+            # b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
+            t1 = time.clock()
+            print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
     print ("DONE: queried total iterations: " + str(query_iterations))
 
 elif (operation == ""):
