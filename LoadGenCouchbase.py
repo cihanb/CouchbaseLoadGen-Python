@@ -42,26 +42,25 @@ def cb_query(_tid, _total_threads, _key_prefix, _key_start, _key_end, _query_str
             t1 = time.clock()
             print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
 
-
-
+# func for help
 def printhelp():
     print("""
 Python load generator for Couchbase Server 4.0 or later. Command line arguments:
 
 Connection parameter
-    -hs=host address couchbase://ADDR/BUCKET (ex: -hs=couchbase://localhost/default)
+    -hs=host address couchbase://ADDR/BUCKET. Defaults to '-hs=couchbase://localhost/default'.
 
 Operation parameters
-    -op=operation to perform. Can be set to query, load
-    -tc=thread count. By default the execution is single threaded but you can parallelize for better 
+    -op=operation to perform. Can be set to query, load. Defaults to '-op=load'.
+    -tc=execution thread count. Defaults to '-tc=1'. tc can parallelize execution for better 
         performance. Each thread gets an equal share of the load or query execution over an independent 
         connection.
 
 Key generation parameters. Applies to load and query operations. All keys get the key prefix (-kp), if 
 one is specified. Keys are generated from starting key number (ks) to ending key number (ke). 
-    -kp=document key prefix (string)
-    -ks=starting key postfix value (int)
-    -ke=ending key postfix value (int)
+    -kp=document key prefix (string). Defaults to no prefix (i.e '')
+    -ks=starting key postfix value (int). Defauls to 0.
+    -ke=ending key postfix value (int). Defaults to 0.
 
 Value generation parameters. Applies to load operation
     -vs=value size in bytes (int)
@@ -88,72 +87,100 @@ A100 for a1.
 """)
     return
 
+#func for parsing the commandline args
+def parse_commandline():
+    #process commandline arguments
+    if (len(sys.argv) == 0):
+        #no command line option specified - display help
+        printhelp()
+        raise("No arguments specified.")
+    elif (len(sys.argv) > 0):
+        for arg in sys.argv:
+            #splitter based on platform
+            argsplit = arg.split("=")
+
+            #read commandline args
+            if (argsplit[0] == "-op"):
+                #connection string
+                operation = str(argsplit[1])
+                continue
+            elif (argsplit[0] == "-qs"):
+                #query string
+                if (len(argsplit)>2):
+                    query_string = str("=".join(argsplit[1:]))
+                else:
+                    query_string = str(argsplit[1])
+                continue
+            elif (argsplit[0] == "-qi"):
+                #query string
+                query_iterations = int(argsplit[1])
+                continue
+            elif (argsplit[0] == "-hn"):
+                #connection string
+                connection_string = str(argsplit[1])
+                continue
+            elif (argsplit[0] == "-kp"):
+                #key prefix
+                key_prefix = str(argsplit[1])
+                continue
+            elif (argsplit[0] == "-ks"):
+                #key starting value 
+                key_start = int(argsplit[1])
+                continue
+            elif (argsplit[0] == "-ke"):
+                #key ending value 
+                key_end = int(argsplit[1])
+                continue
+            elif (argsplit[0] == "-vs"):
+                #value size 
+                value_size = int(argsplit[1])
+                continue
+            elif (argsplit[0] == "-sl"):
+                #selectivity
+                a1_selectivity = int(argsplit[1])
+                continue
+            elif (argsplit[0] == "-tc"):
+                #selectivity
+                total_threads = int(argsplit[1])
+                continue
+            elif ((argsplit[0] == "-h") or (argsplit[0] == "--help") or (argsplit[0] == "--h") or (argsplit[0] == "-help")):
+                printhelp()
+                sys.exit(0)
+            # else:
+            #     print("Invalid argument: {}", arg)
+            #     printhelp()
+        #validate arguments
+        if (operation in ("load", "query")):
+            if (key_end <= key_start):
+                #key_start cannot be larger than key_end value.
+                print ("Invalid key_start and key_end value.")
+                printhelp()
+                sys.exit()
+            if (operation == "query" and query_string == ""):
+                #query string cannot be empty
+                print ("Query string argument (-qs) cannot be empty.")
+                printhelp()
+                sys.exit()
+            if (operation == "query" and query_iterations > 0):
+                #query string cannot be empty
+                print ("Invalid query iterations argument (-qi) specified.")
+                printhelp()
+                sys.exit()
+        else:
+            print ("Incorrect operation argument (-op) specified.")
+            printhelp()
+            sys.exit()
+
+
+# START HERE
 key_prefix=""
 key_start=0
 key_end=0
-operation=""
+operation="load"
 total_threads=1
 
-#process commandline arguments
-if (len(sys.argv) == 0):
-    #no command line option specified - display help
-    printhelp()
-    raise("No arguments specified.")
-elif (len(sys.argv) > 0):
-    for arg in sys.argv:
-        #splitter based on platform
-        argsplit = arg.split("=")
-
-        #read commandline args
-        if (argsplit[0] == "-op"):
-            #connection string
-            operation = str(argsplit[1])
-            continue
-        elif (argsplit[0] == "-qs"):
-            #query string
-            if (len(argsplit)>2):
-                query_string = str("=".join(argsplit[1:]))
-            else:
-                query_string = str(argsplit[1])
-            continue
-        elif (argsplit[0] == "-qi"):
-            #query string
-            query_iterations = int(argsplit[1])
-            continue
-        elif (argsplit[0] == "-hn"):
-            #connection string
-            connection_string = str(argsplit[1])
-            continue
-        elif (argsplit[0] == "-kp"):
-            #key prefix
-            key_prefix = str(argsplit[1])
-            continue
-        elif (argsplit[0] == "-ks"):
-            #key starting value 
-            key_start = int(argsplit[1])
-            continue
-        elif (argsplit[0] == "-ke"):
-            #key ending value 
-            key_end = int(argsplit[1])
-            continue
-        elif (argsplit[0] == "-vs"):
-            #value size 
-            value_size = int(argsplit[1])
-            continue
-        elif (argsplit[0] == "-sl"):
-            #selectivity
-            a1_selectivity = int(argsplit[1])
-            continue
-        elif (argsplit[0] == "-tc"):
-            #selectivity
-            total_threads = int(argsplit[1])
-            continue
-        elif ((argsplit[0] == "-h") or (argsplit[0] == "--help")):
-            printhelp()
-            sys.exit(0)
-        # else:
-        #     print("Invalid argument: {}", arg)
-        #     printhelp()
+#parse the commandline arguments and validate them
+parse_commandline()
 
 if (operation == "load"):
     print ("STARTING: inserting total items: " + str(key_end-key_start))
@@ -213,9 +240,3 @@ elif (operation == "query"):
             t1 = time.clock()
             print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
     print ("DONE: queried total iterations: " + str(query_iterations))
-
-elif (operation == ""):
-    print ("No operation argument (-op) specified.")
-    printhelp()
-    sys.exit()
-
