@@ -140,7 +140,7 @@ def parse_commandline():
                 a1_selectivity = int(argsplit[1])
                 continue
             elif (argsplit[0] == "-tc"):
-                #selectivity
+                #total threads for execution parallelism
                 total_threads = int(argsplit[1])
                 continue
             elif ((argsplit[0] == "-h") or (argsplit[0] == "--help") or (argsplit[0] == "--h") or (argsplit[0] == "-help")):
@@ -173,11 +173,26 @@ def parse_commandline():
 
 
 # START HERE
+# assign defaults
+connection_string="couchbase://localhost/default"
+total_threads=1
+
+#key params
 key_prefix=""
 key_start=0
 key_end=0
+
+#operation params
 operation="load"
-total_threads=1
+
+#load params
+value_size=0
+a1_selectivity=0
+
+#query params
+query_string=""
+query_iterations=0
+
 
 #parse the commandline arguments and validate them
 parse_commandline()
