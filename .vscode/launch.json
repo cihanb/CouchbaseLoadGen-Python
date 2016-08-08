@@ -14,8 +14,8 @@
         "WaitOnNormalExit",
         "RedirectOutput"
     ],
-    "args": ["${file}","-hn=couchbase://localhost/default","-tc=2","-op=load","-kp=A","-ks=0","-ke=100","-vs=1024","-sl=10"]
-    // "args": ["${file}","-hn=couchbase://localhost/default","-qs=select * from default where a1=$1","-op=query","-ks=0","-ke=100","-qi=1024"]
+    // "args": ["${file}","-hn=couchbase://localhost/default","-tc=2","-op=load","-kp=A","-ks=0","-ke=100","-vs=1024","-sl=10"]
+    "args": ["${file}","-hn=couchbase://localhost/default","-qs=select * from default where a1=$1","-op=query","-ks=0","-ke=100","-qi=1000"]
     }   ,
         {
             "name": "Python Console App",
