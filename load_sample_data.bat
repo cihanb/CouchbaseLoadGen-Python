@@ -1,2 +1,2 @@
 REM load 1M items with 100K value size with a1 having 100 distinct values, using 10 threads in parallel 
-%PYTHONPATH%\python.exe LoadGenCouchbase.py -hn=couchbase://10.0.0.52/default -op=load -kp=A -ks=0 -ke=10000000 -vs=100 -sl=100 -tc=10
+%PYTHONPATH%\python.exe LoadGenCouchbase.py -hn=couchbase://10.0.0.52/default -op=load -kp=A -ks=0 -ke=100 -vs=128 -sl=10 -tc=2

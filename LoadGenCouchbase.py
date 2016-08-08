@@ -1,16 +1,16 @@
 #!/usr/bin/python3.5
-
 import sys
 import time
 import threading
 from couchbase.bucket import Bucket
+
 
 # func for multi threaded execution of load
 def cb_loader(_tid, _total_threads, _key_prefix, _key_start, _key_end, _a1_selectivity, _value_size, _connection_string):
     print ("Starting Thread %s" %  _tid)
 
     #establish connection
-    print ("Connecting: ",connection_string)
+    print ("Connecting: ", _connection_string)
     b = Bucket(_connection_string)
 
     for i in range( _key_start, _key_end):
@@ -28,17 +28,16 @@ def cb_query(_tid, _total_threads, _key_prefix, _key_start, _key_end, _query_str
     print ("Starting Thread %s" %  _tid)
 
     #establish connection
-    print ("Connecting: ",connection_string)
+    print ("Connecting: ", _connection_string)
     b = Bucket(_connection_string)
 
-    for i in range(query_iterations):
+    for i in range(_query_iterations):
         if (i % _total_threads == _tid):
-            _query_valued = _query_string.replace("$1", _key_prefix + str(((_key_start + i) % _key_end) + key_start))
+            _query_valued = _query_string.replace("$1", _key_prefix + str(((_key_start + i) % _key_end) + _key_start))
             t0 = time.clock()
             for row in b.n1ql_query(_query_valued):
                 # just measure retrieval time
                 pass
-            # b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
             t1 = time.clock()
             print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
 
@@ -94,6 +93,7 @@ def parse_commandline(_my_args):
         #no command line option specified - display help
         printhelp()
         raise("No arguments specified.")
+
     elif (len(sys.argv) > 0):
         for arg in sys.argv:
             #splitter based on platform
@@ -150,7 +150,7 @@ def parse_commandline(_my_args):
             #     print("Invalid argument: {}", arg)
             #     printhelp()
         #validate arguments
-        if (operation in ("load", "query")):
+        if (_my_args.operation in ("load", "query")):
             if (_my_args.key_end <= _my_args.key_start):
                 #key_start cannot be larger than key_end value.
                 print ("Invalid key_start and key_end value.")
@@ -161,7 +161,7 @@ def parse_commandline(_my_args):
                 print ("Query string argument (-qs) cannot be empty.")
                 printhelp()
                 sys.exit()
-            if (_my_args.operation == "query" and _my_args.query_iterations > 0):
+            if (_my_args.operation == "query" and _my_args.query_iterations <= 0):
                 #query string cannot be empty
                 print ("Invalid query iterations argument (-qi) specified.")
                 printhelp()
@@ -199,15 +199,22 @@ _my_args=cmd_args()
 #parse the commandline arguments and validate them
 parse_commandline(_my_args)
 
-if (operation == "load"):
-    print ("STARTING: inserting total items: " + str(key_end-key_start))
-    if (total_threads > 1):
+if (_my_args.operation == "load"):
+    print ("STARTING: inserting total items: " + str(_my_args.key_end - _my_args.key_start))
+    if (_my_args.total_threads > 1):
         #multi-threaded execution
         cb_loader_threads = []
-        for i in range(total_threads):
+        for i in range(_my_args.total_threads):
             cb_loader_threads.append(
                 threading.Thread(target = cb_loader, 
-                    args = (i, total_threads, key_prefix, key_start, key_end, a1_selectivity, value_size, connection_string, )
+                    args = (i, 
+                            _my_args.total_threads, 
+                            _my_args.key_prefix, 
+                            _my_args.key_start, 
+                            _my_args.key_end, 
+                            _my_args.a1_selectivity, 
+                            _my_args.value_size, 
+                            _my_args.connection_string, )
                     )
                 )
         for j in cb_loader_threads:
@@ -218,42 +225,68 @@ if (operation == "load"):
     else:
         #single-threaded execution
         #establish connection
-        print ("Connecting: ",connection_string)
-        b = Bucket(connection_string)
+        print ("Connecting: ", _my_args.connection_string)
+        b = Bucket(_my_args.connection_string)
 
-        for i in range(key_start,key_end):
+        for i in range(_my_args.key_start, _my_args.key_end):
             t0 = time.clock()
-            b.upsert(key_prefix + str(i),{'a1': i % a1_selectivity, 'a2': "Zero".zfill(value_size)},
-                replicate_to=0,
-                persist_to=0)
+            b.upsert(_my_args.key_prefix + str(i),
+                     {'a1': i % _my_args.a1_selectivity, 'a2': "Zero".zfill(_my_args.value_size)},
+                    replicate_to=0,
+                    persist_to=0)
             t1 = time.clock()
             print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
-    print ("DONE: inserted total items: " + str(key_end-key_start))
+    print ("DONE: inserted total items: " + str(_my_args.key_end - _my_args.key_start))
 
-elif (operation == "query"):
-    print ("STARTING: querying : " + str(query_string))
-    if (total_threads > 1):
+elif (_my_args.operation == "query"):
+    print ("STARTING: querying : " + str(_my_args.query_string))
+    if (_my_args.total_threads > 1):
         #multi-threaded execution
         cb_query_threads = []
-        for i in range(total_threads):
+        for i in range(_my_args.total_threads):
             cb_query_threads.append(
                 threading.Thread(target = cb_query, 
-                    args = (i, total_threads, key_prefix, key_start, key_end, query_string, query_iterations, connection_string, )
+                    args = (i, 
+                            _my_args.total_threads, 
+                            _my_args.key_prefix, 
+                            _my_args.key_start, 
+                            _my_args.key_end, 
+                            _my_args.query_string, 
+                            _my_args.query_iterations, 
+                            _my_args.connection_string, )
                     )
                 )
+        #start all threads
         for j in cb_query_threads:
             j.start()
 
+        #waitfor all threads
         for k in cb_query_threads:
             k.join()
+    
     else:
+        #single-threaded execution
+        
+        #establish connection
+        print ("Connecting: ", _my_args.connection_string)
+        b = Bucket(_my_args.connection_string)
+        
+        #iterate for query
         for i in range(query_iterations):
-            query_valued = query_string.replace("$1",key_prefix + str(((key_start + i) % key_end) + key_start))
+            #replace the $1 if exists
+            query_valued = _my_args.query_string.replace("$1", 
+                _my_args.key_prefix + str(
+                    ((_my_args.key_start + i) % _my_args.key_end) 
+                        + _my_args.key_start)
+                    )
+
+            #start execution of query
             t0 = time.clock()
             for row in b.n1ql_query(query_valued):
                 # just measure retrieval time
                 pass
-            # b.query(query_string.replace("$1",key_prefix + str((key_start + i) % key_end)))
             t1 = time.clock()
+            
             print ("Last execution time in milliseond: %3.3f" % ((t1 - t0) * 1000))
-    print ("DONE: queried total iterations: " + str(query_iterations))
+    
+    print ("DONE: queried total iterations: " + str(_my_args.query_iterations))
