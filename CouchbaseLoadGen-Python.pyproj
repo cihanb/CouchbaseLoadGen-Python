@@ -14,7 +14,7 @@
     <InterpreterId>{9a7a9026-48c1-4688-9d5d-e5699d47d074}</InterpreterId>
     <InterpreterVersion>3.4</InterpreterVersion>
     <IsWindowsApplication>False</IsWindowsApplication>
-    <CommandLineArguments>-hn=couchbase://10.0.0.52/default -op=query -qs=select * from default where a1='$1' -kp=A -ks=0 -ke=100 -qi=1000 -tc=2</CommandLineArguments>
+    <CommandLineArguments>-hn=couchbase://10.0.0.52/default -op=query -qs="select * from default where a1='$1'" -kp=A -ks=0 -ke=100 -qi=1000 -tc=2</CommandLineArguments>
     <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
@@ -31,6 +31,7 @@
     <Content Include="load_sample_data.bat" />
     <Content Include="load_sample_data.sh" />
     <Content Include="query_sample_data.bat" />
+    <Content Include="query_sample_data.sh" />
     <Content Include="README.md" />
     <Content Include="run.bat" />
   </ItemGroup>
