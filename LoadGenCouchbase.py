@@ -88,7 +88,7 @@ A100 for a1.
     return
 
 #func for parsing the commandline args
-def parse_commandline():
+def parse_commandline(_my_args):
     #process commandline arguments
     if (len(sys.argv) == 0):
         #no command line option specified - display help
@@ -102,46 +102,46 @@ def parse_commandline():
             #read commandline args
             if (argsplit[0] == "-op"):
                 #connection string
-                operation = str(argsplit[1])
+                _my_args.operation = str(argsplit[1])
                 continue
             elif (argsplit[0] == "-qs"):
                 #query string
                 if (len(argsplit)>2):
-                    query_string = str("=".join(argsplit[1:]))
+                    _my_args.query_string = str("=".join(argsplit[1:]))
                 else:
-                    query_string = str(argsplit[1])
+                    _my_args.query_string = str(argsplit[1])
                 continue
             elif (argsplit[0] == "-qi"):
                 #query string
-                query_iterations = int(argsplit[1])
+                _my_args.query_iterations = int(argsplit[1])
                 continue
             elif (argsplit[0] == "-hn"):
                 #connection string
-                connection_string = str(argsplit[1])
+                _my_args.connection_string = str(argsplit[1])
                 continue
             elif (argsplit[0] == "-kp"):
                 #key prefix
-                key_prefix = str(argsplit[1])
+                _my_args.key_prefix = str(argsplit[1])
                 continue
             elif (argsplit[0] == "-ks"):
                 #key starting value 
-                key_start = int(argsplit[1])
+                _my_args.key_start = int(argsplit[1])
                 continue
             elif (argsplit[0] == "-ke"):
                 #key ending value 
-                key_end = int(argsplit[1])
+                _my_args.key_end = int(argsplit[1])
                 continue
             elif (argsplit[0] == "-vs"):
                 #value size 
-                value_size = int(argsplit[1])
+                _my_args.value_size = int(argsplit[1])
                 continue
             elif (argsplit[0] == "-sl"):
                 #selectivity
-                a1_selectivity = int(argsplit[1])
+                _my_args.a1_selectivity = int(argsplit[1])
                 continue
             elif (argsplit[0] == "-tc"):
                 #total threads for execution parallelism
-                total_threads = int(argsplit[1])
+                _my_args.total_threads = int(argsplit[1])
                 continue
             elif ((argsplit[0] == "-h") or (argsplit[0] == "--help") or (argsplit[0] == "--h") or (argsplit[0] == "-help")):
                 printhelp()
@@ -151,17 +151,17 @@ def parse_commandline():
             #     printhelp()
         #validate arguments
         if (operation in ("load", "query")):
-            if (key_end <= key_start):
+            if (_my_args.key_end <= _my_args.key_start):
                 #key_start cannot be larger than key_end value.
                 print ("Invalid key_start and key_end value.")
                 printhelp()
                 sys.exit()
-            if (operation == "query" and query_string == ""):
+            if (_my_args.operation == "query" and _my_args.query_string == ""):
                 #query string cannot be empty
                 print ("Query string argument (-qs) cannot be empty.")
                 printhelp()
                 sys.exit()
-            if (operation == "query" and query_iterations > 0):
+            if (_my_args.operation == "query" and _my_args.query_iterations > 0):
                 #query string cannot be empty
                 print ("Invalid query iterations argument (-qi) specified.")
                 printhelp()
@@ -172,30 +172,32 @@ def parse_commandline():
             sys.exit()
 
 
-# START HERE
-# assign defaults
-connection_string="couchbase://localhost/default"
-total_threads=1
+class cmd_args:
+    # assign defaults
+    connection_string="couchbase://localhost/default"
+    total_threads=1
 
-#key params
-key_prefix=""
-key_start=0
-key_end=0
+    #key params
+    key_prefix=""
+    key_start=0
+    key_end=0
 
-#operation params
-operation="load"
+    #operation params
+    operation="load"
 
-#load params
-value_size=0
-a1_selectivity=0
+    #load params
+    value_size=0
+    a1_selectivity=0
 
-#query params
-query_string=""
-query_iterations=0
+    #query params
+    query_string=""
+    query_iterations=0
 
+# START HERE #
+_my_args=cmd_args()
 
 #parse the commandline arguments and validate them
-parse_commandline()
+parse_commandline(_my_args)
 
 if (operation == "load"):
     print ("STARTING: inserting total items: " + str(key_end-key_start))
