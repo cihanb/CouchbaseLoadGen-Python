@@ -8,7 +8,7 @@ Get started with the sample scripts for bash (.sh) or windows (.bat)
 
 ## Connection parameter
 Specify the Couchbase Server cluster to connect to.
--hs=host address couchbase://ADDR/BUCKET. Defaults to '-hs=couchbase://localhost/default'.
+* -hs=host address couchbase://ADDR/BUCKET. Defaults to '-hs=couchbase://localhost/default'.
 
 ## Operation parameters
 Specify the operation (action) to perform. "load" to load data and "query" to execute N1QL queries over data. Use multi threading to parallelize the operations. 
@@ -30,12 +30,11 @@ Applies to load and query operations. All keys get the key prefix (-kp), if one 
 * -qi=number of iterations for query execution. specify 0 for looping and any integer for specify the times to execute the query.
 
 # Examples
-Loading data: The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes 
-in value with an attribute "a1" that is values (100-0) % 10
-    LoadGenCouchbase.py -hs=couchbase://localhost/default -op=load -kp=A -ks=0 -ke=100 -vs=1024 -sl=10
+* Loading data: The following generates 100 keys from A0 to A100 with a value that has a total of 1024 bytes in value with an attribute "a1" that is values (100-0) % 10
 
-Querying data: The following run the query specified 1000 times with the $1 replaced with values from A0 to 
-A100 for a1.
-    LoadGenCouchbase.py -hs=couchbase://localhost/default -op=query -qs=select * from default where a1='$1' 
-    -kp=A -ks=0 -ke=100 -qi=10000 -tc=5
+```LoadGenCouchbase.py -hs=couchbase://localhost/default -op=load -kp=A -ks=0 -ke=100 -vs=1024 -sl=10```
+
+* Querying data: The following run the query specified 1000 times with the $1 replaced with values from A0 to A100 for a1.
+
+```LoadGenCouchbase.py -hs=couchbase://localhost/default -op=query -qs=select * from default where a1='$1' -kp=A -ks=0 -ke=100 -qi=10000 -tc=5```
 
